@@ -44,17 +44,33 @@ jobs:
         run: nix develop --command bin/test
 
       # The gem must stay pure Ruby: no extension of its own, and no
-      # resurrection of the Rust dependencies that were removed. Checked
-      # against the gemspec and the packaged files, because what ships is what
-      # matters.
+      # resurrection of the Rust dependencies that were removed. Built first
+      # and then inspected, because what ships is the artefact rather than the
+      # working tree.
+      #
+      # This deliberately does not try `gem install` into a fresh GEM_HOME.
+      # The dev shell's ruby comes from bundlerEnv with GEM_HOME baked into the
+      # read-only store, so an install there fails on permissions and proves
+      # nothing either way. And it would not prove "no toolchain" regardless:
+      # glib2 and gobject-introspection are native extensions, so installing
+      # this gem does compile C. What is true, and what the README says, is
+      # that this gem adds no build step beyond the two every ruby-gnome
+      # application already needs.
       - name: The packaged gem is pure Ruby
         run: |
-          nix develop --command ruby -e '
-            spec = Gem::Specification.load("flatpak.gemspec")
-            abort "gemspec declares extensions: #{spec.extensions}" unless spec.extensions.empty?
-            names = spec.runtime_dependencies.map(&:name).sort
-            abort "unexpected runtime deps: #{names}" unless names == ["gem_kit", "gobject-introspection"]
-            bad = spec.files.grep(%r{\Aext/|\.rs\z|\ACargo\.})
-            abort "packaged gem carries extension sources: #{bad}" unless bad.empty?
-            puts "packaged gem is pure Ruby; runtime deps: #{names.join(", ")}"
+          nix develop --command bash -lc '
+            set -euo pipefail
+            gem build flatpak.gemspec
+            contents=$(tar -xOf flatpak-*.gem data.tar.gz | tar -tzf -)
+            echo "$contents"
+            if echo "$contents" | grep -qE "(^|/)ext/|\.rs$|Cargo\.(toml|lock)"; then
+              echo "::error::the packaged gem carries native-extension sources"; exit 1
+            fi
+            ruby -e "
+              spec = Gem::Specification.load(\"flatpak.gemspec\")
+              abort \"gemspec declares extensions: #{spec.extensions}\" unless spec.extensions.empty?
+              names = spec.runtime_dependencies.map(&:name).sort
+              abort \"unexpected runtime deps: #{names}\" unless names == [\"gem_kit\", \"gobject-introspection\"]
+              puts \"packaged gem is pure Ruby; runtime deps: #{names.join(\", \")}\"
+            "
           '

@@ -32,9 +32,11 @@
         # whatever Flatpak-1.0.typelib declares as a dependency, which the loader
         # resolves transitively. Nearly every GNOME typelib needs Gio-2.0.
         #
-        # `makeSearchPath` would take each package's *first* output, and glib's
-        # first output is `bin`, which carries no typelibs -- hence the explicit
-        # `.out`. polkit has the same shape, and that trap cost real time twice.
+        # `makeSearchPath` would take each package's *first* output, which
+        # carries no typelibs in either case here -- `pkgs.flatpak`'s first
+        # output is `man` and glib's is `bin`. Hence the explicit `.out`. That
+        # trap cost real time twice, and it is why this is a `map` and not a
+        # plain list of packages.
         typelibPath = pkgs.lib.makeSearchPath "lib/girepository-1.0"
           (map (drv: drv.out or drv) [ pkgs.flatpak pkgs.glib ]);
       in
