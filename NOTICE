@@ -1,0 +1,35 @@
+Flatpak for Ruby
+Copyright 2026 General Intelligence Systems
+
+--------------------------------------------------------------------------------
+flatpak (flatpak-rs)
+--------------------------------------------------------------------------------
+
+The native extension under ext/flatpak links flatpak, a Rust library for
+reading and writing Flatpak application, module and source manifests. It is not
+a binding to libflatpak. This gem is bindings for that crate and nothing else:
+every class it defines wraps a type of it.
+
+  https://github.com/louib/flatpak-rs
+  Copyright (c) louib <code@louib.net>
+  Licensed under the MIT License
+
+The MIT License asks that its copyright notice and permission notice be
+included in copies of the software, which is why the notice above travels with
+this gem. MIT is permissive and imposes no copyleft, so distributing these
+bindings under the Apache License, Version 2.0 is compatible with it; the
+crate's own terms continue to govern the crate.
+
+--------------------------------------------------------------------------------
+Flatpak and flatpak-builder
+--------------------------------------------------------------------------------
+
+The manifest format this gem reads is Flatpak's, and flatpak-builder is the
+reference for what a manifest may contain. Neither appears in any part of this
+product -- they are the specification, not a dependency. Flatpak is licensed
+LGPL-2.1-or-later, so no code or comment may be carried across from it into
+this Apache-licensed work. Reading its documentation to learn what a field
+means is fine; copying its expression is not.
+
+  https://github.com/flatpak/flatpak
+  https://docs.flatpak.org/en/latest/manifests.html
